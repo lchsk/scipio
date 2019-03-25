@@ -5,26 +5,26 @@ import (
 )
 
 func checkIfExists(path string) bool {
-    _, err := os.Stat(path)
+	_, err := os.Stat(path)
 
-    return !os.IsNotExist(err)
+	return !os.IsNotExist(err)
 }
 
 func createDir(dir string) error {
-    if checkIfExists(dir) {
-        return nil
-    }
+	if checkIfExists(dir) {
+		return nil
+	}
 
-    return os.Mkdir(dir, os.ModePerm)
+	return os.Mkdir(dir, os.ModePerm)
 }
 
 func createFile(path string) error {
-    if checkIfExists(path) {
-        return nil
-    }
+	if checkIfExists(path) {
+		return nil
+	}
 
-    f, err := os.Create(path)
-    defer f.Close()
+	f, err := os.Create(path)
+	defer f.Close()
 
-    return err
+	return err
 }
