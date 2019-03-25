@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
     "path/filepath"
+    "os"
 )
 
 func TestCheckNilError(t *testing.T) {
@@ -26,4 +27,6 @@ func TestCreateProject(t *testing.T) {
     assert(t, checkIfExists(filepath.Join(project, "build")), true)
 
     assert(t, checkIfExists(filepath.Join(project, "scipio.conf")), true)
+
+    os.RemoveAll(project)
 }
