@@ -5,10 +5,10 @@ import (
 )
 
 func TestReadParameters(t *testing.T) {
-	params := ReadParameters()
+	params := readParameters()
 
-	assert(t, params.ProjectName, "")
-	assert(t, params.CreateProject, false)
-	assert(t, params.BuildProject, false)
-	assert(t, params.CleanProject, false)
+	assert(t, params.projectName, "")
+	assert(t, params.createProject, false)
+	assert(t, params.buildProject, false)
+	assert(t, params.cleanProject, false)
 }

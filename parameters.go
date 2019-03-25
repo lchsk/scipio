@@ -4,14 +4,14 @@ import (
 	"flag"
 )
 
-type Parameters struct {
-	ProjectName   string
-	CreateProject bool
-	BuildProject  bool
-	CleanProject  bool
+type parameters struct {
+	projectName   string
+	createProject bool
+	buildProject  bool
+	cleanProject  bool
 }
 
-func ReadParameters() Parameters {
+func readParameters() parameters {
 	projectName := flag.String("project", "", "path to the project")
 	createProject := flag.Bool("create", false, "set to create new project")
 	buildProject := flag.Bool("build", false, "set to build project")
@@ -19,10 +19,10 @@ func ReadParameters() Parameters {
 
 	flag.Parse()
 
-	return Parameters{
-		ProjectName:   *projectName,
-		CreateProject: *createProject,
-		BuildProject:  *buildProject,
-		CleanProject:  *cleanProject,
+	return parameters{
+		projectName:   *projectName,
+		createProject: *createProject,
+		buildProject:  *buildProject,
+		cleanProject:  *cleanProject,
 	}
 }

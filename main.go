@@ -2,10 +2,19 @@ package main
 
 import (
 	"fmt"
+    "os"
 )
 
 func main() {
-	params := ReadParameters()
+	params := readParameters()
 
-	fmt.Println(params.ProjectName)
+    if params.projectName == "" {
+        fmt.Println("--project must not be empty")
+        os.Exit(1)
+    }
+
+    if params.createProject {
+        createProject(params.projectName)
+        os.Exit(0)
+    }
 }
