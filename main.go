@@ -22,4 +22,9 @@ func main() {
 		cleanBuild(params.projectName)
 		os.Exit(0)
 	}
+
+	if params.buildProject {
+		buildProject(params.projectName)
+		os.Exit(0)
+	}
 }
