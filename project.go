@@ -1,9 +1,10 @@
 package main
 
 import (
+	"github.com/avelino/slugify"
+	"gopkg.in/russross/blackfriday.v2"
 	"io/ioutil"
-    "log"
-    "fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -76,8 +77,9 @@ func getValueFromSource(source string, pattern *regexp.Regexp) string {
 	return ""
 }
 
-func parseSourceFile(project string) sourceFile {
-	f, _ := ioutil.ReadFile(filepath.Join(project, "source", "posts", "post_1.md"))
+func parseSourceFile(path string) sourceFile {
+	// f, _ := ioutil.ReadFile(filepath.Join(project, "source", "posts", "post_1.md"))
+	f, _ := ioutil.ReadFile(path)
 	source := string(f)
 
 	patterns := make(map[string]*regexp.Regexp)
@@ -126,14 +128,40 @@ func parseSourceFile(project string) sourceFile {
 	return data
 }
 
+func generateArticleHtml(project string, theme string, templateFile string, data sourceFile) {
+	themeFilePath := filepath.Join(project, "themes", theme, templateFile)
+	themeHtml, err := ioutil.ReadFile(themeFilePath)
+
+	checkError(err)
+
+	output := string(themeHtml)
+
+	outputFilePath := filepath.Join(project, "build", slugify.Slugify(data.title)+".html")
+	outputFile, err := os.OpenFile(outputFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+
+	defer outputFile.Close()
+
+	checkError(err)
+
+	output = strings.Replace(output, "{{title}}", data.title, -1)
+	output = strings.Replace(output, "{{description}}", data.description, -1)
+	output = strings.Replace(output, "{{body}}", string(blackfriday.Run([]byte(data.body))), -1)
+	output = strings.Replace(output, "{{keywords}}", strings.Join(data.keywords, ", "), -1)
+	output = strings.Replace(output, "{{date}}", data.created.Format("2006-01-02"), -1)
+
+	outputFile.WriteString(output)
+}
+
 func buildProject(project string) {
-	files, err := ioutil.ReadDir(filepath.Join(project, "source", "posts"))
+	postsDir := filepath.Join(project, "source", "posts")
+	files, err := ioutil.ReadDir(postsDir)
 
-    if err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    fmt.Println(files[0].Name())
-
-	parseSourceFile("test_dir")
+	for _, file := range files {
+		data := parseSourceFile(filepath.Join(postsDir, file.Name()))
+		generateArticleHtml(project, "default", "post.html", data)
+	}
 }

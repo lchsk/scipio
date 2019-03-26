@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -61,7 +62,7 @@ tags: tag1, tag2
 
 Body of Article 1.
 
-- Test 1
+- *Test 1*
 
 - Go
 
@@ -71,13 +72,37 @@ Body of Article 1.
 	f.WriteString(post)
 }
 
+func createTestTheme(project string) {
+	filePost, err := os.Create(filepath.Join(project, "themes", "default", "post.html"))
+	defer filePost.Close()
+
+	checkError(err)
+
+	template := `<html>
+    <head>
+        <meta name="description" content="{{description}}">
+        <meta name="keywords" content="{{keywords}}">
+        <meta name="author" content="">
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
+    </head>
+    <body>
+        <div>{{@index}}</div>
+        <h1>{{title}}</h1>
+        {{date}}
+        <p>{{body}}</p>
+    </body>
+</html>`
+
+	filePost.WriteString(template)
+}
+
 func TestParseSourceFile(t *testing.T) {
 	const project string = "test_dir"
 
 	createProject(project)
 	createTestSourceFiles(project)
 
-	data := parseSourceFile(project)
+	data := parseSourceFile(filepath.Join(project, "source", "posts", "post_1.md"))
 
 	assert(t, data.title, "Article 1")
 	assert(t, data.description, "Description of Article 1")
@@ -96,7 +121,7 @@ func TestParseSourceFile(t *testing.T) {
 
 	assert(t, data.body, `Body of Article 1.
 
-- Test 1
+- *Test 1*
 
 - Go
 
@@ -109,9 +134,41 @@ func TestBuildProject(t *testing.T) {
 	const project string = "test_dir"
 
 	createProject(project)
+	createDir(filepath.Join(project, "themes", "default"))
 	createTestSourceFiles(project)
+	createTestTheme(project)
 
 	buildProject(project)
+
+	html, err := ioutil.ReadFile(filepath.Join(project, "build", "article-1.html"))
+
+	checkError(err)
+
+	expected := `<html>
+    <head>
+        <meta name="description" content="Description of Article 1">
+        <meta name="keywords" content="scipio, tests, go">
+        <meta name="author" content="">
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
+    </head>
+    <body>
+        <div>{{@index}}</div>
+        <h1>Article 1</h1>
+        1950-05-15
+        <p><p>Body of Article 1.</p>
+
+<ul>
+<li><p><em>Test 1</em></p></li>
+
+<li><p>Go</p></li>
+
+<li><p>Scipio</p></li>
+</ul>
+</p>
+    </body>
+</html>`
+
+	assert(t, expected, string(html))
 
 	os.RemoveAll(project)
 }
