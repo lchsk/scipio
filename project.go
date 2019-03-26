@@ -2,6 +2,8 @@ package main
 
 import (
 	"io/ioutil"
+    "log"
+    "fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -27,7 +29,7 @@ func createProject(project string) {
 	checkError(err)
 	err = createDir(filepath.Join(project, "source", "pages"))
 	checkError(err)
-	err = createDir(filepath.Join(project, "source", "themes"))
+	err = createDir(filepath.Join(project, "themes"))
 	checkError(err)
 	err = createFile(filepath.Join(project, "source", "index.md"))
 	checkError(err)
@@ -125,5 +127,13 @@ func parseSourceFile(project string) sourceFile {
 }
 
 func buildProject(project string) {
+	files, err := ioutil.ReadDir(filepath.Join(project, "source", "posts"))
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(files[0].Name())
+
 	parseSourceFile("test_dir")
 }
