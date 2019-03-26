@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/avelino/slugify"
 	"gopkg.in/russross/blackfriday.v2"
 	"io/ioutil"
@@ -65,6 +66,7 @@ type sourceFile struct {
 	created     time.Time
 	body        string
 	entryType   int
+	slug        string
 }
 
 func getValueFromSource(source string, pattern *regexp.Regexp) string {
@@ -77,7 +79,7 @@ func getValueFromSource(source string, pattern *regexp.Regexp) string {
 	return ""
 }
 
-func parseSourceFile(path string) sourceFile {
+func parseSourceFile(path string, entryType int) sourceFile {
 	// f, _ := ioutil.ReadFile(filepath.Join(project, "source", "posts", "post_1.md"))
 	f, _ := ioutil.ReadFile(path)
 	source := string(f)
@@ -123,12 +125,14 @@ func parseSourceFile(path string) sourceFile {
 		created:     t,
 		body:        body,
 		entryType:   POST,
+		slug:        slugify.Slugify(title),
 	}
 
 	return data
 }
 
-func generateArticleHtml(project string, theme string, templateFile string, data sourceFile) {
+func generateArticleHtml(project string, theme string, templateFile string, data sourceFile,
+	articles []sourceFile) {
 	themeFilePath := filepath.Join(project, "themes", theme, templateFile)
 	themeHtml, err := ioutil.ReadFile(themeFilePath)
 
@@ -136,7 +140,7 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 
 	output := string(themeHtml)
 
-	outputFilePath := filepath.Join(project, "build", slugify.Slugify(data.title)+".html")
+	outputFilePath := filepath.Join(project, "build", data.slug+".html")
 	outputFile, err := os.OpenFile(outputFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 
 	defer outputFile.Close()
@@ -149,19 +153,55 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 	output = strings.Replace(output, "{{keywords}}", strings.Join(data.keywords, ", "), -1)
 	output = strings.Replace(output, "{{date}}", data.created.Format("2006-01-02"), -1)
 
+	for _, article := range articles {
+		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(data), -1)
+	}
+
 	outputFile.WriteString(output)
+}
+
+func createLink(data sourceFile) string {
+	return fmt.Sprintf("<a href=\"%s\" title=\"%s\">%s</a>", data.slug+".html", data.description, data.title)
 }
 
 func buildProject(project string) {
 	postsDir := filepath.Join(project, "source", "posts")
-	files, err := ioutil.ReadDir(postsDir)
+	postsFiles, err := ioutil.ReadDir(postsDir)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, file := range files {
-		data := parseSourceFile(filepath.Join(postsDir, file.Name()))
-		generateArticleHtml(project, "default", "post.html", data)
+	pagesDir := filepath.Join(project, "source", "pages")
+	pagesFiles, err := ioutil.ReadDir(pagesDir)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var articles []sourceFile
+
+	for _, postFile := range postsFiles {
+		data := parseSourceFile(filepath.Join(postsDir, postFile.Name()), POST)
+		articles = append(articles, data)
+	}
+
+	for _, pageFile := range pagesFiles {
+		data := parseSourceFile(filepath.Join(pagesDir, pageFile.Name()), PAGE)
+		articles = append(articles, data)
+	}
+
+	for _, article := range articles {
+		template := ""
+
+		if article.entryType == POST {
+			template = "post.html"
+		} else if article.entryType == PAGE {
+			template = "page.html"
+		} else {
+			template = "index.html"
+		}
+
+		generateArticleHtml(project, "default", template, article, articles)
 	}
 }

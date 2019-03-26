@@ -49,8 +49,8 @@ func TestCleanBuild(t *testing.T) {
 }
 
 func createTestSourceFiles(project string) {
-	f, _ := os.Create(filepath.Join(project, "source", "posts", "post_1.md"))
-	defer f.Close()
+	filePost, _ := os.Create(filepath.Join(project, "source", "posts", "post_1.md"))
+	defer filePost.Close()
 
 	post := `---
 title: Article 1
@@ -69,7 +69,24 @@ Body of Article 1.
 - Scipio
 `
 
-	f.WriteString(post)
+	filePost.WriteString(post)
+
+	filePage, _ := os.Create(filepath.Join(project, "source", "pages", "page_1.md"))
+	defer filePage.Close()
+
+	page := `---
+title: Article 2
+created: 1960-05-15T00:00:00Z
+description: Description of Article 2
+keywords: go, and, stuff
+tags: tag1, tag2
+---
+
+Body of Article 2.
+`
+
+	filePage.WriteString(page)
+
 }
 
 func createTestTheme(project string) {
@@ -86,7 +103,7 @@ func createTestTheme(project string) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
-        <div>{{@index}}</div>
+        <div>{{@article-2}}</div>
         <h1>{{title}}</h1>
         {{date}}
         <p>{{body}}</p>
@@ -102,7 +119,7 @@ func TestParseSourceFile(t *testing.T) {
 	createProject(project)
 	createTestSourceFiles(project)
 
-	data := parseSourceFile(filepath.Join(project, "source", "posts", "post_1.md"))
+	data := parseSourceFile(filepath.Join(project, "source", "posts", "post_1.md"), POST)
 
 	assert(t, data.title, "Article 1")
 	assert(t, data.description, "Description of Article 1")
@@ -152,7 +169,7 @@ func TestBuildProject(t *testing.T) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
-        <div>{{@index}}</div>
+        <div><a href="article-1.html" title="Description of Article 1">Article 1</a></div>
         <h1>Article 1</h1>
         1950-05-15
         <p><p>Body of Article 1.</p>
