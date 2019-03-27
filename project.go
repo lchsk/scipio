@@ -116,6 +116,14 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		t = time.Unix(0, 0)
 	}
 
+	slug := ""
+
+	if entryType == INDEX {
+		slug = "index"
+	} else {
+		slug = slugify.Slugify(title)
+	}
+
 	data := sourceFile{
 		source:      source,
 		title:       title,
@@ -124,8 +132,8 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		tags:        tags,
 		created:     t,
 		body:        body,
-		entryType:   POST,
-		slug:        slugify.Slugify(title),
+		entryType:   entryType,
+		slug:        slug,
 	}
 
 	return data
@@ -154,10 +162,15 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 	output = strings.Replace(output, "{{date}}", data.created.Format("2006-01-02"), -1)
 
 	for _, article := range articles {
-		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(data), -1)
+		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article), -1)
 	}
 
 	outputFile.WriteString(output)
+}
+
+func generateIndexHtml(project string, theme string, templateFile string, data sourceFile,
+	articles []sourceFile) {
+
 }
 
 func createLink(data sourceFile) string {
@@ -191,6 +204,9 @@ func buildProject(project string) {
 		articles = append(articles, data)
 	}
 
+	indexData := parseSourceFile(filepath.Join(project, "source", "index.md"), INDEX)
+	articles = append(articles, indexData)
+
 	for _, article := range articles {
 		template := ""
 
@@ -203,5 +219,9 @@ func buildProject(project string) {
 		}
 
 		generateArticleHtml(project, "default", template, article, articles)
+
+		if template == "index.html" {
+			generateIndexHtml(project, "default", template, article, articles)
+		}
 	}
 }

@@ -87,6 +87,21 @@ Body of Article 2.
 
 	filePage.WriteString(page)
 
+	fileIndex, _ := os.Create(filepath.Join(project, "source", "index.md"))
+	defer fileIndex.Close()
+
+	index := `---
+title: Index Page
+created: 1970-05-15T00:00:00Z
+description: Index Page Description
+keywords: go, and, stuff
+tags: tag1, tag2
+---
+
+Home Page
+`
+
+	fileIndex.WriteString(index)
 }
 
 func createTestTheme(project string) {
@@ -95,7 +110,7 @@ func createTestTheme(project string) {
 
 	checkError(err)
 
-	template := `<html>
+	postTemplate := `<html>
     <head>
         <meta name="description" content="{{description}}">
         <meta name="keywords" content="{{keywords}}">
@@ -110,7 +125,51 @@ func createTestTheme(project string) {
     </body>
 </html>`
 
-	filePost.WriteString(template)
+	filePost.WriteString(postTemplate)
+
+	filePage, errPage := os.Create(filepath.Join(project, "themes", "default", "page.html"))
+	defer filePage.Close()
+
+	checkError(errPage)
+
+	pageTemplate := `<html>
+    <head>
+        <meta name="description" content="{{description}}">
+        <meta name="keywords" content="{{keywords}}">
+        <meta name="author" content="">
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
+    </head>
+    <body>
+        <div>{{@article-2}}</div>
+        <h1>{{title}}</h1>
+        {{date}}
+        <p>{{body}}</p>
+    </body>
+</html>`
+
+	filePage.WriteString(pageTemplate)
+
+	fileIndex, errIndex := os.Create(filepath.Join(project, "themes", "default", "index.html"))
+	defer fileIndex.Close()
+
+	checkError(errIndex)
+
+	indexTemplate := `<html>
+    <head>
+        <meta name="description" content="{{description}}">
+        <meta name="keywords" content="{{keywords}}">
+        <meta name="author" content="">
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
+    </head>
+    <body>
+        <div>{{@article-2}}</div>
+        <h1>{{title}}</h1>
+        {{date}}
+        <p>{{body}}</p>
+    </body>
+</html>`
+
+	fileIndex.WriteString(indexTemplate)
 }
 
 func TestParseSourceFile(t *testing.T) {
@@ -169,7 +228,7 @@ func TestBuildProject(t *testing.T) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
-        <div><a href="article-1.html" title="Description of Article 1">Article 1</a></div>
+        <div><a href="article-2.html" title="Description of Article 2">Article 2</a></div>
         <h1>Article 1</h1>
         1950-05-15
         <p><p>Body of Article 1.</p>
@@ -186,6 +245,28 @@ func TestBuildProject(t *testing.T) {
 </html>`
 
 	assert(t, expected, string(html))
+
+	indexHtml, indexErr := ioutil.ReadFile(filepath.Join(project, "build", "index.html"))
+
+	checkError(indexErr)
+
+	expectedIndex := `<html>
+    <head>
+        <meta name="description" content="Index Page Description">
+        <meta name="keywords" content="go, and, stuff">
+        <meta name="author" content="">
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
+    </head>
+    <body>
+        <div><a href="article-2.html" title="Description of Article 2">Article 2</a></div>
+        <h1>Index Page</h1>
+        1970-05-15
+        <p><p>Home Page</p>
+</p>
+    </body>
+</html>`
+
+	assert(t, expectedIndex, string(indexHtml))
 
 	os.RemoveAll(project)
 }
