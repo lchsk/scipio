@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/avelino/slugify"
+	"github.com/gorilla/feeds"
 	"gopkg.in/russross/blackfriday.v2"
 	"io/ioutil"
 	"log"
@@ -194,6 +195,38 @@ func sortArticles(articles []sourceFile) []sourceFile {
 	return articles
 }
 
+func generateRss(project string, articles []sourceFile) {
+	outputFile, err := os.OpenFile(filepath.Join(project, "build", "posts.xml"), os.O_CREATE|os.O_WRONLY, 0644)
+	defer outputFile.Close()
+
+	checkError(err)
+
+	var items []*feeds.Item
+
+	for _, article := range articles {
+		link := &feeds.Link{Href: fmt.Sprintf("https://lchsk.com/%s.html", article.slug)}
+		items = append(items, &feeds.Item{Title: article.title, Link: link, Description: article.description, Created: article.created})
+	}
+
+	now := time.Now()
+	feed := &feeds.Feed{
+		Title:       "lchsk",
+		Link:        &feeds.Link{Href: "http://lchsk.com"},
+		Description: "lchsk",
+		Author:      &feeds.Author{Name: "lchsk", Email: "lchsk"},
+		Created:     now,
+		Items:       items,
+	}
+
+	rss, err := feed.ToRss()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	outputFile.WriteString(rss)
+}
+
 func addIndexHtml(output string, project string, theme string, templateFile string, data sourceFile,
 	articles []sourceFile) string {
 
@@ -212,6 +245,8 @@ func addIndexHtml(output string, project string, theme string, templateFile stri
 		}
 
 		output = strings.Replace(output, posts[1], postsContent, -1)
+
+		generateRss(project, sortedPosts)
 	}
 
 	return output
