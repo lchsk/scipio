@@ -166,10 +166,10 @@ func createTestTheme(project string) {
         <h1>{{title}}</h1>
         {{date}}
         <p>{{body}}</p>
-        {{posts-begin}}
+{{posts-begin}}
         <li>{{post_link}}</li>
         <span class="date">{{post_date}}</span>
-        {{posts-end}}
+{{posts-end}}
     </body>
 </html>`
 
@@ -267,10 +267,10 @@ func TestBuildProject(t *testing.T) {
         1970-05-15
         <p><p>Home Page</p>
 </p>
-        {{posts-begin}}
+
         <li><a href="article-1.html" title="Description of Article 1">Article 1</a></li>
         <span class="date">1950-05-15</span>
-        {{posts-end}}
+
     </body>
 </html>`
 

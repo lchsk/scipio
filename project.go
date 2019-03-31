@@ -245,6 +245,8 @@ func addIndexHtml(output string, project string, theme string, templateFile stri
 		}
 
 		output = strings.Replace(output, posts[1], postsContent, -1)
+		output = strings.Replace(output, "{{posts-begin}}", "", -1)
+		output = strings.Replace(output, "{{posts-end}}", "", -1)
 
 		generateRss(project, sortedPosts)
 	}
