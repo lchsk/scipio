@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -165,12 +166,55 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article), -1)
 	}
 
+	if templateFile == "index.html" {
+		output = addIndexHtml(output, project, "default", templateFile, data, articles)
+	}
+
 	outputFile.WriteString(output)
 }
 
-func generateIndexHtml(project string, theme string, templateFile string, data sourceFile,
-	articles []sourceFile) {
+func filterArticles(articles []sourceFile, entryType int) []sourceFile {
+	var filtered []sourceFile
 
+	for _, article := range articles {
+		if article.entryType == entryType {
+			filtered = append(filtered, article)
+		}
+	}
+
+	return filtered
+}
+
+func sortArticles(articles []sourceFile) []sourceFile {
+	// Sort in descending order by date
+	sort.Slice(articles, func(i, j int) bool {
+		return articles[i].created.After(articles[j].created)
+	})
+
+	return articles
+}
+
+func addIndexHtml(output string, project string, theme string, templateFile string, data sourceFile,
+	articles []sourceFile) string {
+
+	sortedPosts := filterArticles(sortArticles(articles), POST)
+
+	postsLoop := regexp.MustCompile("(?s){{posts-begin}}(.*){{posts-end}}")
+	posts := postsLoop.FindStringSubmatch(output)
+
+	if len(posts) == 2 {
+		postsContent := ""
+
+		for _, post := range sortedPosts {
+			singlePostContent := strings.Replace(posts[1], "{{post_link}}", createLink(post), -1)
+			singlePostContent = strings.Replace(singlePostContent, "{{post_date}}", post.created.Format("2006-01-02"), -1)
+			postsContent += singlePostContent
+		}
+
+		output = strings.Replace(output, posts[1], postsContent, -1)
+	}
+
+	return output
 }
 
 func createLink(data sourceFile) string {
@@ -219,9 +263,5 @@ func buildProject(project string) {
 		}
 
 		generateArticleHtml(project, "default", template, article, articles)
-
-		if template == "index.html" {
-			generateIndexHtml(project, "default", template, article, articles)
-		}
 	}
 }
