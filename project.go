@@ -301,4 +301,17 @@ func buildProject(project string) {
 
 		generateArticleHtml(project, "default", template, article, articles)
 	}
+
+	copyStaticDirectories(project)
+}
+
+func copyStaticDirectories(project string) {
+	staticFrom := filepath.Join(project, "themes", "default", "static")
+	staticTo := filepath.Join(project, "build")
+
+	dataFrom := filepath.Join(project, "source", "data")
+	dataTo := filepath.Join(project, "build")
+
+	copyDirectory(staticFrom, staticTo)
+	copyDirectory(dataFrom, dataTo)
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+    "os/exec"
 )
 
 func checkIfExists(path string) bool {
@@ -27,4 +28,13 @@ func createFile(path string) error {
 	defer f.Close()
 
 	return err
+}
+
+func copyDirectory(from, to string) {
+	cmd := exec.Command("cp", "-r", from, to)
+	_, err := cmd.Output()
+
+	if err != nil {
+		panic(err)
+	}
 }
