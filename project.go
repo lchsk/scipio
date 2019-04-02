@@ -69,6 +69,7 @@ type sourceFile struct {
 	body        string
 	entryType   int
 	slug        string
+	overrideSlug string
 }
 
 func getValueFromSource(source string, pattern *regexp.Regexp) string {
@@ -82,12 +83,12 @@ func getValueFromSource(source string, pattern *regexp.Regexp) string {
 }
 
 func parseSourceFile(path string, entryType int) sourceFile {
-	// f, _ := ioutil.ReadFile(filepath.Join(project, "source", "posts", "post_1.md"))
 	f, _ := ioutil.ReadFile(path)
 	source := string(f)
 
 	patterns := make(map[string]*regexp.Regexp)
 	patterns["title"] = regexp.MustCompile("title: (.+)")
+	patterns["overrideSlug"] = regexp.MustCompile("slug: (.+)")
 	patterns["description"] = regexp.MustCompile("description: (.+)")
 	patterns["keywords"] = regexp.MustCompile("keywords: (.+)")
 	patterns["tags"] = regexp.MustCompile("tags: (.+)")
@@ -95,6 +96,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 	patterns["body"] = regexp.MustCompile("(?s)---.*---(.*)")
 
 	title := getValueFromSource(source, patterns["title"])
+	overrideSlug := getValueFromSource(source, patterns["overrideSlug"])
 	description := getValueFromSource(source, patterns["description"])
 	body := strings.TrimSpace(getValueFromSource(source, patterns["body"]))
 
@@ -123,7 +125,11 @@ func parseSourceFile(path string, entryType int) sourceFile {
 	if entryType == INDEX {
 		slug = "index"
 	} else {
-		slug = slugify.Slugify(title)
+        if overrideSlug == "" {
+            slug = slugify.Slugify(title)
+        } else {
+            slug = overrideSlug
+        }
 	}
 
 	data := sourceFile{
