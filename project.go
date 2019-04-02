@@ -60,15 +60,16 @@ const (
 )
 
 type sourceFile struct {
-	source      string
-	title       string
-	description string
-	keywords    []string
-	tags        []string
-	created     time.Time
-	body        string
-	entryType   int
-	slug        string
+	source       string
+	title        string
+	description  string
+	keywords     []string
+	tags         []string
+	redirects    []string
+	created      time.Time
+	body         string
+	entryType    int
+	slug         string
 	overrideSlug string
 }
 
@@ -92,6 +93,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 	patterns["description"] = regexp.MustCompile("description: (.+)")
 	patterns["keywords"] = regexp.MustCompile("keywords: (.+)")
 	patterns["tags"] = regexp.MustCompile("tags: (.+)")
+	patterns["redirectFrom"] = regexp.MustCompile("redirect_from: (.+)")
 	patterns["created"] = regexp.MustCompile("created: (.+)")
 	patterns["body"] = regexp.MustCompile("(?s)---.*---(.*)")
 
@@ -100,6 +102,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 	description := getValueFromSource(source, patterns["description"])
 	body := strings.TrimSpace(getValueFromSource(source, patterns["body"]))
 
+	// TODO: Factor this out
 	parsedKeywords := strings.Split(getValueFromSource(source, patterns["keywords"]), ",")
 	keywords := make([]string, len(parsedKeywords))
 
@@ -114,6 +117,17 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		tags[i] = strings.TrimSpace(tag)
 	}
 
+	parsedRedirects := strings.Split(getValueFromSource(source, patterns["redirectFrom"]), ",")
+	var redirects []string
+
+	for _, redirect := range parsedRedirects {
+		trimmedRedirect := strings.TrimSpace(redirect)
+
+		if trimmedRedirect != "" {
+			redirects = append(redirects, trimmedRedirect)
+		}
+	}
+
 	t, err := time.Parse(time.RFC3339, getValueFromSource(source, patterns["created"]))
 
 	if err != nil {
@@ -125,11 +139,11 @@ func parseSourceFile(path string, entryType int) sourceFile {
 	if entryType == INDEX {
 		slug = "index"
 	} else {
-        if overrideSlug == "" {
-            slug = slugify.Slugify(title)
-        } else {
-            slug = overrideSlug
-        }
+		if overrideSlug == "" {
+			slug = slugify.Slugify(title)
+		} else {
+			slug = overrideSlug
+		}
 	}
 
 	data := sourceFile{
@@ -138,6 +152,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		description: description,
 		keywords:    keywords,
 		tags:        tags,
+		redirects:   redirects,
 		created:     t,
 		body:        body,
 		entryType:   entryType,
@@ -162,6 +177,10 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 	defer outputFile.Close()
 
 	checkError(err)
+
+	if len(data.redirects) != 0 {
+		generateRedirectHtml(project, data)
+	}
 
 	output = strings.Replace(output, "{{title}}", data.title, -1)
 	output = strings.Replace(output, "{{description}}", data.description, -1)
@@ -258,6 +277,31 @@ func addIndexHtml(output string, project string, theme string, templateFile stri
 	}
 
 	return output
+}
+
+func generateRedirectHtml(project string, data sourceFile) {
+	for _, redirect := range data.redirects {
+		outputFilePath := filepath.Join(project, "build", redirect+".html")
+		outputFile, err := os.OpenFile(outputFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+
+		defer outputFile.Close()
+
+		checkError(err)
+
+		os.Truncate(outputFilePath, 0)
+
+		newUrl := data.slug + ".html"
+
+		redirectHtml := fmt.Sprintf(`<html>
+<head>
+<meta http-equiv="refresh" content="0; url=%s">
+<body>
+<p><a href="%s">Redirect</a></p>
+</body>
+</html>
+`, newUrl, newUrl)
+		outputFile.WriteString(redirectHtml)
+	}
 }
 
 func createLink(data sourceFile) string {

@@ -2,7 +2,7 @@ package main
 
 import (
 	"os"
-    "os/exec"
+	"os/exec"
 )
 
 func checkIfExists(path string) bool {
