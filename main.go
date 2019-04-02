@@ -13,6 +13,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	conf := readConfig(params.projectName)
+
 	if params.createProject {
 		createProject(params.projectName)
 		os.Exit(0)
@@ -24,7 +26,7 @@ func main() {
 	}
 
 	if params.buildProject {
-		buildProject(params.projectName)
+		buildProject(params.projectName, conf)
 		os.Exit(0)
 	}
 }

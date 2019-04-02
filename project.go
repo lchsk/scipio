@@ -163,7 +163,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 }
 
 func generateArticleHtml(project string, theme string, templateFile string, data sourceFile,
-	articles []sourceFile) {
+	articles []sourceFile, conf *config) {
 	themeFilePath := filepath.Join(project, "themes", theme, templateFile)
 	themeHtml, err := ioutil.ReadFile(themeFilePath)
 
@@ -193,7 +193,7 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 	}
 
 	if templateFile == "index.html" {
-		output = addIndexHtml(output, project, "default", templateFile, data, articles)
+		output = addIndexHtml(output, project, "default", templateFile, data, articles, conf)
 	}
 
 	os.Truncate(outputFilePath, 0)
@@ -221,7 +221,7 @@ func sortArticles(articles []sourceFile) []sourceFile {
 	return articles
 }
 
-func generateRss(project string, articles []sourceFile) {
+func generateRss(project string, articles []sourceFile, conf *config) {
 	rssPath := filepath.Join(project, "build", "posts.xml")
 	outputFile, err := os.OpenFile(rssPath, os.O_CREATE|os.O_WRONLY, 0644)
 	defer outputFile.Close()
@@ -231,16 +231,16 @@ func generateRss(project string, articles []sourceFile) {
 	var items []*feeds.Item
 
 	for _, article := range articles {
-		link := &feeds.Link{Href: fmt.Sprintf("https://lchsk.com/%s.html", article.slug)}
+		link := &feeds.Link{Href: fmt.Sprintf("%s/%s.html", conf.Url, article.slug)}
 		items = append(items, &feeds.Item{Title: article.title, Link: link, Description: article.description, Created: article.created})
 	}
 
 	now := time.Now()
 	feed := &feeds.Feed{
-		Title:       "lchsk",
-		Link:        &feeds.Link{Href: "http://lchsk.com"},
-		Description: "lchsk",
-		Author:      &feeds.Author{Name: "lchsk", Email: "lchsk"},
+		Title:       conf.Rss.Title,
+		Link:        &feeds.Link{Href: conf.Url},
+		Description: conf.Rss.Description,
+		Author:      &feeds.Author{Name: conf.Rss.AuthorName, Email: conf.Rss.AuthorEmail},
 		Created:     now,
 		Items:       items,
 	}
@@ -256,7 +256,7 @@ func generateRss(project string, articles []sourceFile) {
 }
 
 func addIndexHtml(output string, project string, theme string, templateFile string, data sourceFile,
-	articles []sourceFile) string {
+	articles []sourceFile, conf *config) string {
 
 	sortedPosts := filterArticles(sortArticles(articles), POST)
 
@@ -276,7 +276,9 @@ func addIndexHtml(output string, project string, theme string, templateFile stri
 		output = strings.Replace(output, "{{posts-begin}}", "", -1)
 		output = strings.Replace(output, "{{posts-end}}", "", -1)
 
-		generateRss(project, sortedPosts)
+		if conf.Rss.GenerateRss {
+			generateRss(project, sortedPosts, conf)
+		}
 	}
 
 	return output
@@ -311,7 +313,7 @@ func createLink(data sourceFile) string {
 	return fmt.Sprintf("<a href=\"%s\" title=\"%s\">%s</a>", data.slug+".html", data.description, data.title)
 }
 
-func buildProject(project string) {
+func buildProject(project string, conf *config) {
 	postsDir := filepath.Join(project, "source", "posts")
 	postsFiles, err := ioutil.ReadDir(postsDir)
 
@@ -352,7 +354,7 @@ func buildProject(project string) {
 			template = "index.html"
 		}
 
-		generateArticleHtml(project, "default", template, article, articles)
+		generateArticleHtml(project, "default", template, article, articles, conf)
 	}
 
 	copyStaticDirectories(project)
