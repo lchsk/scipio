@@ -196,6 +196,7 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 		output = addIndexHtml(output, project, "default", templateFile, data, articles)
 	}
 
+	os.Truncate(outputFilePath, 0)
 	outputFile.WriteString(output)
 }
 
@@ -221,7 +222,8 @@ func sortArticles(articles []sourceFile) []sourceFile {
 }
 
 func generateRss(project string, articles []sourceFile) {
-	outputFile, err := os.OpenFile(filepath.Join(project, "build", "posts.xml"), os.O_CREATE|os.O_WRONLY, 0644)
+	rssPath := filepath.Join(project, "build", "posts.xml")
+	outputFile, err := os.OpenFile(rssPath, os.O_CREATE|os.O_WRONLY, 0644)
 	defer outputFile.Close()
 
 	checkError(err)
@@ -249,6 +251,7 @@ func generateRss(project string, articles []sourceFile) {
 		log.Fatal(err)
 	}
 
+	os.Truncate(rssPath, 0)
 	outputFile.WriteString(rss)
 }
 
