@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/avelino/slugify"
-	"github.com/gorilla/feeds"
-	"gopkg.in/russross/blackfriday.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,6 +10,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/avelino/slugify"
+	"github.com/gorilla/feeds"
+	"gopkg.in/russross/blackfriday.v2"
 )
 
 func checkError(e error) {
@@ -33,7 +34,13 @@ func createProject(project string) {
 	checkError(err)
 	err = createDir(filepath.Join(project, "source", "pages"))
 	checkError(err)
+	err = createDir(filepath.Join(project, "source", "data"))
+	checkError(err)
 	err = createDir(filepath.Join(project, "themes"))
+	checkError(err)
+	err = createDir(filepath.Join(project, "themes", "default"))
+	checkError(err)
+	err = createDir(filepath.Join(project, "themes", "default", "static"))
 	checkError(err)
 	err = createFile(filepath.Join(project, "source", "index.md"))
 	checkError(err)

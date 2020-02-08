@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -31,6 +33,15 @@ func createFile(path string) error {
 }
 
 func copyDirectory(from, to string) {
+	if _, err := os.Stat(from); os.IsNotExist(err) {
+		panic(fmt.Sprintf("path '%s' does not exist", from))
+	}
+	if _, err := os.Stat(to); os.IsNotExist(err) {
+		panic(fmt.Sprintf("path '%s' does not exist", to))
+	}
+
+	log.Printf("Copying %s to %s", from, to)
+
 	cmd := exec.Command("cp", "-r", from, to)
 	_, err := cmd.Output()
 

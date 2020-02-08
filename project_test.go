@@ -23,7 +23,9 @@ func TestCreateProject(t *testing.T) {
 	assert(t, checkIfExists(filepath.Join(project, "source")), true)
 	assert(t, checkIfExists(filepath.Join(project, "source", "posts")), true)
 	assert(t, checkIfExists(filepath.Join(project, "source", "pages")), true)
+	assert(t, checkIfExists(filepath.Join(project, "source", "data")), true)
 	assert(t, checkIfExists(filepath.Join(project, "themes")), true)
+	assert(t, checkIfExists(filepath.Join(project, "themes", "default", "static")), true)
 	assert(t, checkIfExists(filepath.Join(project, "source", "index.md")), true)
 
 	assert(t, checkIfExists(filepath.Join(project, "build")), true)
@@ -218,7 +220,7 @@ func TestBuildProject(t *testing.T) {
 	createTestSourceFiles(project)
 	createTestTheme(project)
 
-	buildProject(project)
+	buildProject(project, &config{})
 
 	html, err := ioutil.ReadFile(filepath.Join(project, "build", "article-1.html"))
 
