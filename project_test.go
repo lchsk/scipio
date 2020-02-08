@@ -107,10 +107,15 @@ Home Page
 }
 
 func createTestTheme(project string) {
+	fileTopMenuTemplate, err := os.Create(filepath.Join(project, "themes", "default", "top_menu.html"))
+	defer fileTopMenuTemplate.Close()
+	checkError(err)
+
 	filePost, err := os.Create(filepath.Join(project, "themes", "default", "post.html"))
 	defer filePost.Close()
-
 	checkError(err)
+
+	fileTopMenuTemplate.WriteString("top menu")
 
 	postTemplate := `<html>
     <head>
@@ -120,6 +125,7 @@ func createTestTheme(project string) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
+        {{#include top_menu.html}}
         <div>{{@article-2}}</div>
         <h1>{{title}}</h1>
         {{date}}
@@ -142,6 +148,7 @@ func createTestTheme(project string) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
+        {{#include top_menu.html}}
         <div>{{@article-2}}</div>
         <h1>{{title}}</h1>
         {{date}}
@@ -164,6 +171,7 @@ func createTestTheme(project string) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
+        {{#include top_menu.html}}
         <div>{{@article-2}}</div>
         <h1>{{title}}</h1>
         {{date}}
@@ -234,6 +242,7 @@ func TestBuildProject(t *testing.T) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
+        top menu
         <div><a href="article-2.html" title="Description of Article 2">Article 2</a></div>
         <h1>Article 1</h1>
         1950-05-15
@@ -264,6 +273,7 @@ func TestBuildProject(t *testing.T) {
         <link rel="stylesheet" type="text/css" href="static/styles.css">
     </head>
     <body>
+        top menu
         <div><a href="article-2.html" title="Description of Article 2">Article 2</a></div>
         <h1>Index Page</h1>
         1970-05-15

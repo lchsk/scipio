@@ -170,7 +170,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 }
 
 func generateArticleHtml(project string, theme string, templateFile string, data sourceFile,
-	articles []sourceFile, conf *config) {
+	articles []sourceFile, conf *config, templates map[string]string) {
 	themeFilePath := filepath.Join(project, "themes", theme, templateFile)
 	themeHtml, err := ioutil.ReadFile(themeFilePath)
 
@@ -194,6 +194,13 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 	output = strings.Replace(output, "{{body}}", string(blackfriday.Run([]byte(data.body))), -1)
 	output = strings.Replace(output, "{{keywords}}", strings.Join(data.keywords, ", "), -1)
 	output = strings.Replace(output, "{{date}}", data.created.Format("2006-01-02"), -1)
+
+	for templateName, templateContent := range templates {
+		if templateFile == templateName {
+			continue
+		}
+		output = strings.Replace(output, "{{#include "+templateName+"}}", templateContent, -1)
+	}
 
 	for _, article := range articles {
 		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article), -1)
@@ -335,6 +342,20 @@ func buildProject(project string, conf *config) {
 		log.Fatal(err)
 	}
 
+	templatesDir := filepath.Join(project, "themes", "default")
+	templateFiles, err := ioutil.ReadDir(templatesDir)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	templates := make(map[string]string)
+
+	for _, templateFile := range templateFiles {
+		f, _ := ioutil.ReadFile(filepath.Join(templatesDir, templateFile.Name()))
+		templates[templateFile.Name()] = string(f)
+	}
+
 	var articles []sourceFile
 
 	for _, postFile := range postsFiles {
@@ -361,7 +382,7 @@ func buildProject(project string, conf *config) {
 			template = "index.html"
 		}
 
-		generateArticleHtml(project, "default", template, article, articles, conf)
+		generateArticleHtml(project, "default", template, article, articles, conf, templates)
 	}
 
 	copyStaticDirectories(project)
