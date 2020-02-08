@@ -206,8 +206,8 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article), -1)
 	}
 
-	if templateFile == "index.html" {
-		output = addIndexHtml(output, project, "default", templateFile, data, articles, conf)
+	if templateFile == "index.html" || templateFile == "posts.html" {
+		output = addPostsLinksHtml(output, project, "default", templateFile, data, articles, conf)
 	}
 
 	os.Truncate(outputFilePath, 0)
@@ -269,7 +269,7 @@ func generateRss(project string, articles []sourceFile, conf *config) {
 	outputFile.WriteString(rss)
 }
 
-func addIndexHtml(output string, project string, theme string, templateFile string, data sourceFile,
+func addPostsLinksHtml(output string, project string, theme string, templateFile string, data sourceFile,
 	articles []sourceFile, conf *config) string {
 
 	sortedPosts := filterArticles(sortArticles(articles), POST)
@@ -384,6 +384,16 @@ func buildProject(project string, conf *config) {
 
 		generateArticleHtml(project, "default", template, article, articles, conf, templates)
 	}
+
+	// TODO: Move this to the config file
+	postArticle := sourceFile{
+		slug:        "posts",
+		title:       "Posts",
+		description: "Posts and articles",
+		keywords:    []string{"posts"},
+	}
+
+	generateArticleHtml(project, "default", "posts.html", postArticle, articles, conf, templates)
 
 	copyStaticDirectories(project)
 }
