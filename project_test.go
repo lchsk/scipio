@@ -115,6 +115,10 @@ func createTestTheme(project string) {
 	defer filePost.Close()
 	checkError(err)
 
+	filePostList, err := os.Create(filepath.Join(project, "themes", "default", "posts.html"))
+	defer filePostList.Close()
+	checkError(err)
+
 	fileTopMenuTemplate.WriteString("top menu")
 
 	postTemplate := `<html>
