@@ -1,15 +1,17 @@
 package main
 
 import (
-	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"log"
 	"path/filepath"
+
+	"github.com/BurntSushi/toml"
 )
 
 type config struct {
-	Url string
-	Rss rssConfig
+	Url   string
+	Rss   rssConfig
+	Posts postsConfig
 }
 
 type rssConfig struct {
@@ -18,6 +20,13 @@ type rssConfig struct {
 	Description string
 	AuthorName  string `toml:"author_name"`
 	AuthorEmail string `toml:"author_email"`
+}
+
+type postsConfig struct {
+	Slug        string   `toml:slug`
+	Title       string   `toml:title`
+	Description string   `toml:description`
+	Keywords    []string `toml:keywords`
 }
 
 func readConfig(project string) *config {

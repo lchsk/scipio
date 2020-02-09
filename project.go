@@ -387,10 +387,10 @@ func buildProject(project string, conf *config) {
 
 	// TODO: Move this to the config file
 	postArticle := sourceFile{
-		slug:        "posts",
-		title:       "Posts",
-		description: "Posts and articles",
-		keywords:    []string{"posts"},
+		slug:        conf.Posts.Slug,
+		title:       conf.Posts.Title,
+		description: conf.Posts.Description,
+		keywords:    conf.Posts.Keywords,
 	}
 
 	generateArticleHtml(project, "default", "posts.html", postArticle, articles, conf, templates)
