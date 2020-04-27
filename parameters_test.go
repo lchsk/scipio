@@ -7,8 +7,9 @@ import (
 func TestReadParameters(t *testing.T) {
 	params := readParameters()
 
-	assert(t, params.projectName, "")
-	assert(t, params.createProject, false)
-	assert(t, params.buildProject, false)
-	assert(t, params.cleanBuild, false)
+	assert(t, params.ProjectName, "")
+	assert(t, params.CreateProject, false)
+	assert(t, params.BuildProject, false)
+	assert(t, params.CleanBuild, false)
+	assert(t, params.Serve, false)
 }

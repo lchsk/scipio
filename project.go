@@ -52,8 +52,12 @@ func createProject(project string) {
 	checkError(err)
 }
 
+func getBuildDir(project string) string {
+	return filepath.Join(project, "build")
+}
+
 func cleanBuild(project string) {
-	err := os.RemoveAll(filepath.Join(project, "build"))
+	err := os.RemoveAll(getBuildDir(project))
 	checkError(err)
 
 	err = createDir(filepath.Join(project, "build"))

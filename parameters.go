@@ -4,25 +4,29 @@ import (
 	"flag"
 )
 
-type parameters struct {
-	projectName   string
-	createProject bool
-	buildProject  bool
-	cleanBuild    bool
+type Parameters struct {
+	ProjectName   string
+	CreateProject bool
+	BuildProject  bool
+	CleanBuild    bool
+	Serve         bool
 }
 
-func readParameters() parameters {
+func readParameters() *Parameters {
+	// TODO: Change projectName variable name
 	projectName := flag.String("project", "", "path to the project")
 	createProject := flag.Bool("create", false, "set to create new project")
-	buildProject := flag.Bool("build", false, "set to build project")
+	buildProject := flag.Bool("build", false, "build project and quit")
 	cleanBuild := flag.Bool("clean", false, "set to clean built project")
+	serve := flag.Bool("serve", false, "build and run server")
 
 	flag.Parse()
 
-	return parameters{
-		projectName:   *projectName,
-		createProject: *createProject,
-		buildProject:  *buildProject,
-		cleanBuild:    *cleanBuild,
+	return &Parameters{
+		ProjectName:   *projectName,
+		CreateProject: *createProject,
+		BuildProject:  *buildProject,
+		CleanBuild:    *cleanBuild,
+		Serve:         *serve,
 	}
 }
