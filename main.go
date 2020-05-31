@@ -6,8 +6,15 @@ import (
 	"os"
 )
 
+const ScipioVersion = "0.1"
+
 func main() {
 	params := readParameters()
+
+	if params.Version {
+		fmt.Printf("Scipio v%s\n", ScipioVersion)
+		os.Exit(0)
+	}
 
 	if params.ProjectName == "" {
 		fmt.Println("--project must not be empty")
