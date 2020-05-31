@@ -94,6 +94,21 @@ func getValueFromSource(source string, pattern *regexp.Regexp) string {
 	return ""
 }
 
+func getArticles(files []os.FileInfo, postsDir string, entryType int) []sourceFile {
+	var articles []sourceFile
+
+	for _, postFile := range files {
+		name := postFile.Name()
+		ext := name[len(name)-3:]
+		if ext == ".md" {
+			data := parseSourceFile(filepath.Join(postsDir, name), entryType)
+			articles = append(articles, data)
+		}
+	}
+
+	return articles
+}
+
 func parseSourceFile(path string, entryType int) sourceFile {
 	f, _ := ioutil.ReadFile(path)
 	source := string(f)
@@ -204,6 +219,21 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 			continue
 		}
 		output = strings.Replace(output, "{{#include "+templateName+"}}", templateContent, -1)
+	}
+
+	extraPath := regexp.MustCompile("{{#include (.+)}}")
+
+	matches := extraPath.FindAllStringSubmatch(output, -1)
+
+	for _, match := range matches {
+		path := filepath.Join(project, "source", match[1])
+		f, err := ioutil.ReadFile(path)
+
+		if err != nil {
+			continue
+		}
+
+		output = strings.Replace(output, match[0], string(f), -1)
 	}
 
 	for _, article := range articles {
@@ -361,17 +391,10 @@ func buildProject(project string, conf *config) {
 		templates[templateFile.Name()] = string(f)
 	}
 
-	var articles []sourceFile
+	postsArticles := getArticles(postsFiles, postsDir, POST)
+	pagesArticles := getArticles(pagesFiles, pagesDir, PAGE)
 
-	for _, postFile := range postsFiles {
-		data := parseSourceFile(filepath.Join(postsDir, postFile.Name()), POST)
-		articles = append(articles, data)
-	}
-
-	for _, pageFile := range pagesFiles {
-		data := parseSourceFile(filepath.Join(pagesDir, pageFile.Name()), PAGE)
-		articles = append(articles, data)
-	}
+	articles := append(postsArticles, pagesArticles...)
 
 	indexData := parseSourceFile(filepath.Join(project, "source", "index.md"), INDEX)
 	articles = append(articles, indexData)
