@@ -9,9 +9,14 @@ import (
 )
 
 type config struct {
-	Url   string
-	Rss   rssConfig
-	Posts postsConfig
+	Url    string
+	Rss    rssConfig
+	Posts  postsConfig
+	Static staticConfig
+}
+
+type staticConfig struct {
+	Copy []map[string]string
 }
 
 type rssConfig struct {

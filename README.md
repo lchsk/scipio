@@ -25,6 +25,10 @@ Static website generator in Golang
 {{@<page-slug>}}
 
 {{#include <template.html>}}
+```
 
+## Source files variables
 
+```
+{{#include file.html}}
 ```

@@ -426,10 +426,10 @@ func buildProject(project string, conf *config) {
 		generateArticleHtml(project, "default", "posts.html", postArticle, articles, conf, templates)
 	}
 
-	copyStaticDirectories(project)
+	copyStaticDirectories(project, conf)
 }
 
-func copyStaticDirectories(project string) {
+func copyStaticDirectories(project string, conf *config) {
 	staticFrom := filepath.Join(project, "themes", "default", "static")
 	staticTo := filepath.Join(project, "build")
 
@@ -438,4 +438,10 @@ func copyStaticDirectories(project string) {
 
 	copyDirectory(staticFrom, staticTo)
 	copyDirectory(dataFrom, dataTo)
+
+	for _, dirData := range conf.Static.Copy {
+		from := filepath.Join(project, "source", dirData["from"])
+		to := filepath.Join(project, "build", dirData["to"])
+		copyDirectory(from, to)
+	}
 }
