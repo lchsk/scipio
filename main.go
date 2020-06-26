@@ -22,25 +22,25 @@ func main() {
 	}
 
 	if params.CreateProject {
-		createProject(params.ProjectName, params)
+		createProject(params)
 		os.Exit(0)
 	}
 
 	if params.CleanBuild {
-		cleanBuild(params.ProjectName, params)
+		cleanBuild(params)
 		os.Exit(0)
 	}
 
 	conf := readConfig(params.ProjectName)
 
 	if params.BuildProject {
-		buildProject(params.ProjectName, conf, params)
+		buildProject(conf, params)
 		os.Exit(0)
 	}
 
 	if params.Serve {
-		buildProject(params.ProjectName, conf, params)
-		http.Handle("/", http.FileServer(http.Dir(getBuildDir(params.ProjectName, params))))
+		buildProject(conf, params)
+		http.Handle("/", http.FileServer(http.Dir(getBuildDir(params))))
 		fmt.Println("Serving content on http://localhost:4000")
 		if err := http.ListenAndServe(":4000", nil); err != nil {
 			fmt.Printf("Error: %s\n", err)
