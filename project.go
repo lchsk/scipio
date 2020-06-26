@@ -22,7 +22,7 @@ func checkError(e error) {
 	}
 }
 
-func createProject(project string) {
+func createProject(project string, params *Parameters) {
 	var err error
 
 	err = createDir(project)
@@ -42,25 +42,28 @@ func createProject(project string) {
 	checkError(err)
 	err = createDir(filepath.Join(project, "themes", "default", "static"))
 	checkError(err)
+	err = createFile(filepath.Join(project, "themes", "default", "index.html"))
+	checkError(err)
 	err = createFile(filepath.Join(project, "source", "index.md"))
 	checkError(err)
 
-	err = createDir(filepath.Join(project, "build"))
-	checkError(err)
-
-	err = createFile(filepath.Join(project, "scipio.conf"))
+	err = createFile(filepath.Join(project, "scipio.toml"))
 	checkError(err)
 }
 
-func getBuildDir(project string) string {
-	return filepath.Join(project, "build")
+func getBuildDir(project string, params *Parameters) string {
+	if params.BuildDir == "" {
+		return filepath.Join(project, "build")
+	} else {
+		return params.BuildDir
+	}
 }
 
-func cleanBuild(project string) {
-	err := os.RemoveAll(getBuildDir(project))
+func cleanBuild(project string, params *Parameters) {
+	err := os.RemoveAll(getBuildDir(project, params))
 	checkError(err)
 
-	err = createDir(filepath.Join(project, "build"))
+	err = createDir(getBuildDir(project, params))
 	checkError(err)
 }
 
@@ -189,7 +192,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 }
 
 func generateArticleHtml(project string, theme string, templateFile string, data sourceFile,
-	articles []sourceFile, conf *config, templates map[string]string) {
+	articles []sourceFile, conf *config, templates map[string]string, params *Parameters) {
 	themeFilePath := filepath.Join(project, "themes", theme, templateFile)
 	themeHtml, err := ioutil.ReadFile(themeFilePath)
 
@@ -197,7 +200,9 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 
 	output := string(themeHtml)
 
-	outputFilePath := filepath.Join(project, "build", data.slug+".html")
+	buildDir := getBuildDir(project, params)
+
+	outputFilePath := filepath.Join(buildDir, data.slug+".html")
 	outputFile, err := os.OpenFile(outputFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 
 	defer outputFile.Close()
@@ -241,7 +246,7 @@ func generateArticleHtml(project string, theme string, templateFile string, data
 	}
 
 	if templateFile == "index.html" || templateFile == "posts.html" {
-		output = addPostsLinksHtml(output, project, "default", templateFile, data, articles, conf)
+		output = addPostsLinksHtml(output, project, "default", templateFile, data, articles, conf, params)
 	}
 
 	os.Truncate(outputFilePath, 0)
@@ -269,8 +274,9 @@ func sortArticles(articles []sourceFile) []sourceFile {
 	return articles
 }
 
-func generateRss(project string, articles []sourceFile, conf *config) {
-	rssPath := filepath.Join(project, "build", "posts.xml")
+func generateRss(project string, articles []sourceFile, conf *config, params *Parameters) {
+	buildDir := getBuildDir(project, params)
+	rssPath := filepath.Join(buildDir, "posts.xml")
 	outputFile, err := os.OpenFile(rssPath, os.O_CREATE|os.O_WRONLY, 0644)
 	defer outputFile.Close()
 
@@ -304,7 +310,7 @@ func generateRss(project string, articles []sourceFile, conf *config) {
 }
 
 func addPostsLinksHtml(output string, project string, theme string, templateFile string, data sourceFile,
-	articles []sourceFile, conf *config) string {
+	articles []sourceFile, conf *config, params *Parameters) string {
 
 	sortedPosts := filterArticles(sortArticles(articles), POST)
 
@@ -325,7 +331,7 @@ func addPostsLinksHtml(output string, project string, theme string, templateFile
 		output = strings.Replace(output, "{{posts-end}}", "", -1)
 
 		if conf.Rss.GenerateRss {
-			generateRss(project, sortedPosts, conf)
+			generateRss(project, sortedPosts, conf, params)
 		}
 	}
 
@@ -361,8 +367,8 @@ func createLink(data sourceFile) string {
 	return fmt.Sprintf("<a href=\"%s\" title=\"%s\">%s</a>", data.slug+".html", data.description, data.title)
 }
 
-func buildProject(project string, conf *config) {
-	cleanBuild(project)
+func buildProject(project string, conf *config, params *Parameters) {
+	cleanBuild(project, params)
 	postsDir := filepath.Join(project, "source", "posts")
 	postsFiles, err := ioutil.ReadDir(postsDir)
 
@@ -410,7 +416,7 @@ func buildProject(project string, conf *config) {
 			template = "index.html"
 		}
 
-		generateArticleHtml(project, "default", template, article, articles, conf, templates)
+		generateArticleHtml(project, "default", template, article, articles, conf, templates, params)
 	}
 
 	// TODO: Move this to the config file
@@ -423,25 +429,23 @@ func buildProject(project string, conf *config) {
 
 	// Don't generate if Posts config is not defined
 	if conf.Posts.Slug != "" {
-		generateArticleHtml(project, "default", "posts.html", postArticle, articles, conf, templates)
+		generateArticleHtml(project, "default", "posts.html", postArticle, articles, conf, templates, params)
 	}
 
-	copyStaticDirectories(project, conf)
+	copyStaticDirectories(project, conf, params)
 }
 
-func copyStaticDirectories(project string, conf *config) {
+func copyStaticDirectories(project string, conf *config, params *Parameters) {
 	staticFrom := filepath.Join(project, "themes", "default", "static")
-	staticTo := filepath.Join(project, "build")
-
+	buildDir := getBuildDir(project, params)
 	dataFrom := filepath.Join(project, "source", "data")
-	dataTo := filepath.Join(project, "build")
 
-	copyDirectory(staticFrom, staticTo)
-	copyDirectory(dataFrom, dataTo)
+	copyDirectory(staticFrom, buildDir)
+	copyDirectory(dataFrom, buildDir)
 
 	for _, dirData := range conf.Static.Copy {
 		from := filepath.Join(project, "source", dirData["from"])
-		to := filepath.Join(project, "build", dirData["to"])
+		to := filepath.Join(buildDir, dirData["to"])
 		copyDirectory(from, to)
 	}
 }

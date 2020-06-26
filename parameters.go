@@ -11,6 +11,7 @@ type Parameters struct {
 	CleanBuild    bool
 	Serve         bool
 	Version       bool
+	BuildDir      string
 }
 
 func readParameters() *Parameters {
@@ -21,6 +22,7 @@ func readParameters() *Parameters {
 	cleanBuild := flag.Bool("clean", false, "set to clean built project")
 	serve := flag.Bool("serve", false, "build and run server")
 	version := flag.Bool("version", false, "show version info")
+	buildDir := flag.String("build-dir", "", "build directory")
 
 	flag.Parse()
 
@@ -31,5 +33,6 @@ func readParameters() *Parameters {
 		CleanBuild:    *cleanBuild,
 		Serve:         *serve,
 		Version:       *version,
+		BuildDir:      *buildDir,
 	}
 }
