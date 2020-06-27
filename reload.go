@@ -12,7 +12,6 @@ func setupReloading(conf *config, params *Parameters) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer watcher.Close()
 
 	go func() {
 		for {
