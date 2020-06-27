@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 )
@@ -41,9 +42,12 @@ func main() {
 	if params.Serve {
 		buildProject(conf, params)
 		http.Handle("/", http.FileServer(http.Dir(getBuildDir(params))))
-		fmt.Println("Serving content on http://localhost:4000")
+		log.Println("Serving content on http://localhost:4000")
+
+		setupReloading(conf, params)
+
 		if err := http.ListenAndServe(":4000", nil); err != nil {
-			fmt.Printf("Error: %s\n", err)
+			log.Printf("Error: %s\n", err)
 			os.Exit(1)
 		}
 	}
