@@ -17,7 +17,11 @@ func TestCheckNilError(t *testing.T) {
 func TestCreateProject(t *testing.T) {
 	const project string = "test_dir"
 
-	createProject(project)
+	params := &Parameters{
+		ProjectName: project,
+	}
+
+	createProject(params)
 
 	assert(t, checkIfExists(project), true)
 	assert(t, checkIfExists(filepath.Join(project, "source")), true)
@@ -28,9 +32,9 @@ func TestCreateProject(t *testing.T) {
 	assert(t, checkIfExists(filepath.Join(project, "themes", "default", "static")), true)
 	assert(t, checkIfExists(filepath.Join(project, "source", "index.md")), true)
 
-	assert(t, checkIfExists(filepath.Join(project, "build")), true)
+	assert(t, checkIfExists(filepath.Join(project, "build")), false)
 
-	assert(t, checkIfExists(filepath.Join(project, "scipio.conf")), true)
+	assert(t, checkIfExists(filepath.Join(project, "scipio.toml")), true)
 
 	os.RemoveAll(project)
 }
@@ -38,12 +42,17 @@ func TestCreateProject(t *testing.T) {
 func TestCleanBuild(t *testing.T) {
 	const project string = "test_dir"
 
-	createProject(project)
+	params := &Parameters{
+		ProjectName: project,
+	}
+
+	createProject(params)
+	buildProject(&config{}, params)
 	createFile(filepath.Join(project, "build", "test_file"))
 
 	assert(t, checkIfExists(filepath.Join(project, "build", "test_file")), true)
 
-	cleanBuild(project)
+	cleanBuild(params)
 
 	assert(t, checkIfExists(filepath.Join(project, "build", "test_file")), false)
 
@@ -193,7 +202,11 @@ func createTestTheme(project string) {
 func TestParseSourceFile(t *testing.T) {
 	const project string = "test_dir"
 
-	createProject(project)
+	params := &Parameters{
+		ProjectName: project,
+	}
+
+	createProject(params)
 	createTestSourceFiles(project)
 
 	data := parseSourceFile(filepath.Join(project, "source", "posts", "post_1.md"), POST)
@@ -227,12 +240,16 @@ func TestParseSourceFile(t *testing.T) {
 func TestBuildProject(t *testing.T) {
 	const project string = "test_dir"
 
-	createProject(project)
+	params := &Parameters{
+		ProjectName: project,
+	}
+
+	createProject(params)
 	createDir(filepath.Join(project, "themes", "default"))
 	createTestSourceFiles(project)
 	createTestTheme(project)
 
-	buildProject(project, &config{})
+	buildProject(&config{}, params)
 
 	html, err := ioutil.ReadFile(filepath.Join(project, "build", "article-1.html"))
 
