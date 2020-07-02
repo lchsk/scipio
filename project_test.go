@@ -39,6 +39,11 @@ func TestCreateProject(t *testing.T) {
 	os.RemoveAll(project)
 }
 
+func getDefaultConfig() *config {
+	build := buildConfig{RemoveBuildDir: true}
+	return &config{Build: build}
+}
+
 func TestCleanBuild(t *testing.T) {
 	const project string = "test_dir"
 
@@ -47,7 +52,7 @@ func TestCleanBuild(t *testing.T) {
 	}
 
 	createProject(params)
-	buildProject(&config{}, params)
+	buildProject(getDefaultConfig(), params)
 	createFile(filepath.Join(project, "build", "test_file"))
 
 	assert(t, checkIfExists(filepath.Join(project, "build", "test_file")), true)
@@ -249,7 +254,7 @@ func TestBuildProject(t *testing.T) {
 	createTestSourceFiles(project)
 	createTestTheme(project)
 
-	buildProject(&config{}, params)
+	buildProject(getDefaultConfig(), params)
 
 	html, err := ioutil.ReadFile(filepath.Join(project, "build", "article-1.html"))
 

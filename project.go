@@ -371,7 +371,11 @@ func createLink(data sourceFile) string {
 
 func buildProject(conf *config, params *Parameters) {
 	project := params.ProjectName
-	cleanBuild(params)
+
+	if conf.Build.RemoveBuildDir {
+		cleanBuild(params)
+	}
+
 	postsDir := filepath.Join(project, "source", "posts")
 	postsFiles, err := ioutil.ReadDir(postsDir)
 
@@ -435,7 +439,9 @@ func buildProject(conf *config, params *Parameters) {
 		generateArticleHtml("default", "posts.html", postArticle, articles, conf, templates, params)
 	}
 
-	copyStaticDirectories(conf, params)
+	if conf.Build.CopyStaticDirs {
+		copyStaticDirectories(conf, params)
+	}
 }
 
 func copyStaticDirectories(conf *config, params *Parameters) {

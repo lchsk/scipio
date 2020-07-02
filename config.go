@@ -13,10 +13,16 @@ type config struct {
 	Rss    rssConfig
 	Posts  postsConfig
 	Static staticConfig
+	Build  buildConfig
 }
 
 type staticConfig struct {
 	Copy []map[string]string
+}
+
+type buildConfig struct {
+	RemoveBuildDir bool `toml:"remove_build_dir"`
+	CopyStaticDirs bool `toml:"copy_static_dirs"`
 }
 
 type rssConfig struct {
@@ -43,6 +49,9 @@ func readConfig(project string) *config {
 	}
 
 	conf := &config{}
+	// Defaults
+	conf.Build.RemoveBuildDir = true
+	conf.Build.CopyStaticDirs = true
 
 	if _, err := toml.Decode(string(f), conf); err != nil {
 		log.Fatal("Failed to read the config file! ", err)
