@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -15,6 +16,8 @@ import (
 	"github.com/gorilla/feeds"
 	"gopkg.in/russross/blackfriday.v2"
 )
+
+var codeBlockRegex = regexp.MustCompile("(?s)```([a-z]+)(\\n)(.+?)```")
 
 func checkError(e error) {
 	if e != nil {
@@ -215,9 +218,47 @@ func generateArticleHtml(theme string, templateFile string, data sourceFile,
 		generateRedirectHtml(params, data)
 	}
 
+	// Syntax highlighting
+	// TODO: Move somewhere else
+
+	//codeBlock := regexp.MustCompile("(?s)```([a-z]+)(\\n)(.+?)```")
+	body := data.body
+	codeMatches := codeBlockRegex.FindAllStringSubmatch(body, -1)
+
+	for _, match := range codeMatches {
+		tmpFilePath := filepath.Join("scipio_pygments_input")
+		os.Remove(tmpFilePath)
+		o1, err := os.OpenFile(tmpFilePath, os.O_CREATE|os.O_WRONLY, 0644)
+
+		if err != nil {
+			fmt.Printf("Could not create a temp file: %s\n", err)
+			continue
+		}
+
+		if len(match) != 4 {
+			fmt.Printf("Couldn't find code block for syntax highlighting, got %d elements instead of 4", len(match))
+			continue
+		}
+
+		o1.WriteString(match[3])
+
+		language := match[1]
+
+		// TODO: Add optional -O linenos option to add line numbers
+
+		out, err := exec.Command("pygmentize", "-f", "html", "-l", language, "scipio_pygments_input").Output()
+
+		if err != nil {
+			fmt.Printf("Couldn't find pygmentize, syntax highlighting will not work: %s\n", err)
+			continue
+		}
+
+		body = strings.Replace(body, match[0], string(out), -1)
+	}
+
 	output = strings.Replace(output, "{{title}}", data.title, -1)
 	output = strings.Replace(output, "{{description}}", data.description, -1)
-	output = strings.Replace(output, "{{body}}", string(blackfriday.Run([]byte(data.body))), -1)
+	output = strings.Replace(output, "{{body}}", string(blackfriday.Run([]byte(body))), -1)
 	output = strings.Replace(output, "{{keywords}}", strings.Join(data.keywords, ", "), -1)
 	output = strings.Replace(output, "{{date}}", data.created.Format("2006-01-02"), -1)
 
@@ -325,6 +366,7 @@ func addPostsLinksHtml(output string, project string, theme string, templateFile
 		for _, post := range sortedPosts {
 			singlePostContent := strings.Replace(posts[1], "{{post_link}}", createLink(post), -1)
 			singlePostContent = strings.Replace(singlePostContent, "{{post_date}}", post.created.Format("2006-01-02"), -1)
+			singlePostContent = strings.Replace(singlePostContent, "{{post_description}}", post.description, -1)
 			postsContent += singlePostContent
 		}
 
