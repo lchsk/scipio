@@ -14,7 +14,7 @@ import (
 
 	"github.com/avelino/slugify"
 	"github.com/gorilla/feeds"
-	"gopkg.in/russross/blackfriday.v2"
+	"github.com/russross/blackfriday/v2"
 )
 
 var codeBlockRegex = regexp.MustCompile("(?s)```([a-z]+)(\\n)(.+?)```")
@@ -89,6 +89,7 @@ type sourceFile struct {
 	entryType    int
 	slug         string
 	overrideSlug string
+	templateFile string
 }
 
 func getValueFromSource(source string, pattern *regexp.Regexp) string {
@@ -123,6 +124,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 	patterns := make(map[string]*regexp.Regexp)
 	patterns["title"] = regexp.MustCompile("title: (.+)")
 	patterns["overrideSlug"] = regexp.MustCompile("slug: (.+)")
+	patterns["templateFile"] = regexp.MustCompile("template: (.+)")
 	patterns["description"] = regexp.MustCompile("description: (.+)")
 	patterns["keywords"] = regexp.MustCompile("keywords: (.+)")
 	patterns["tags"] = regexp.MustCompile("tags: (.+)")
@@ -132,6 +134,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 
 	title := getValueFromSource(source, patterns["title"])
 	overrideSlug := getValueFromSource(source, patterns["overrideSlug"])
+	templateFile := getValueFromSource(source, patterns["templateFile"])
 	description := getValueFromSource(source, patterns["description"])
 	body := strings.TrimSpace(getValueFromSource(source, patterns["body"]))
 
@@ -179,6 +182,18 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		}
 	}
 
+	if templateFile == "" {
+		if entryType == POST {
+			templateFile = "post.html"
+		} else if entryType == PAGE {
+			templateFile = "page.html"
+		} else {
+			templateFile = "index.html"
+		}
+	}
+
+	fmt.Printf("title: %s templateFile: %s\n", title, templateFile)
+
 	data := sourceFile{
 		source:      source,
 		title:       title,
@@ -190,6 +205,7 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		body:        body,
 		entryType:   entryType,
 		slug:        slug,
+		templateFile: templateFile,
 	}
 
 	return data
@@ -288,6 +304,7 @@ func generateArticleHtml(theme string, templateFile string, data sourceFile,
 		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article), -1)
 	}
 
+	// TODO: template file names shouldn't be hardcoded
 	if templateFile == "index.html" || templateFile == "posts.html" {
 		output = addPostsLinksHtml(output, project, "default", templateFile, data, articles, conf, params)
 	}
@@ -455,17 +472,7 @@ func buildProject(conf *config, params *Parameters) {
 	articles = append(articles, indexData)
 
 	for _, article := range articles {
-		template := ""
-
-		if article.entryType == POST {
-			template = "post.html"
-		} else if article.entryType == PAGE {
-			template = "page.html"
-		} else {
-			template = "index.html"
-		}
-
-		generateArticleHtml("default", template, article, articles, conf, templates, params)
+		generateArticleHtml("default", article.templateFile, article, articles, conf, templates, params)
 	}
 
 	// TODO: Move this to the config file
@@ -477,6 +484,7 @@ func buildProject(conf *config, params *Parameters) {
 	}
 
 	// Don't generate if Posts config is not defined
+	// TODO: templateFile shouldn't be hardecoded
 	if conf.Posts.Slug != "" {
 		generateArticleHtml("default", "posts.html", postArticle, articles, conf, templates, params)
 	}
