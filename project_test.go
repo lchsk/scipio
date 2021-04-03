@@ -41,7 +41,7 @@ func TestCreateProject(t *testing.T) {
 
 func getDefaultConfig() *config {
 	build := buildConfig{RemoveBuildDir: true}
-	return &config{Build: build}
+	return &config{Build: build, OutputExtension: ".html", LinksBeginWithSlash: false}
 }
 
 func TestCleanBuild(t *testing.T) {

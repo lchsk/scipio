@@ -16,4 +16,6 @@ func TestDefaultConfig(t *testing.T) {
 	config := readConfig(project)
 	assert(t, true, config.Build.RemoveBuildDir)
 	assert(t, true, config.Build.CopyStaticDirs)
+	assert(t, false, config.LinksBeginWithSlash)
+	assert(t, ".html", config.OutputExtension)
 }

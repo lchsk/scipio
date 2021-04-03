@@ -10,6 +10,8 @@ import (
 
 type config struct {
 	Url    string
+	OutputExtension string `toml:"output_extension"`
+	LinksBeginWithSlash bool `toml:"links_begin_with_slash"`
 	Rss    rssConfig
 	Posts  postsConfig
 	Static staticConfig
@@ -52,6 +54,8 @@ func readConfig(project string) *config {
 	// Defaults
 	conf.Build.RemoveBuildDir = true
 	conf.Build.CopyStaticDirs = true
+	conf.OutputExtension = ".html"
+	conf.LinksBeginWithSlash = false
 
 	if _, err := toml.Decode(string(f), conf); err != nil {
 		log.Fatal("Failed to read the config file! ", err)

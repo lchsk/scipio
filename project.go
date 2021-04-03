@@ -192,8 +192,6 @@ func parseSourceFile(path string, entryType int) sourceFile {
 		}
 	}
 
-	fmt.Printf("title: %s templateFile: %s\n", title, templateFile)
-
 	data := sourceFile{
 		source:      source,
 		title:       title,
@@ -223,7 +221,15 @@ func generateArticleHtml(theme string, templateFile string, data sourceFile,
 
 	buildDir := getBuildDir(params)
 
-	outputFilePath := filepath.Join(buildDir, data.slug+".html")
+	var outputExtension string
+
+	if templateFile == "index.html" {
+		outputExtension = ".html"
+	} else {
+		outputExtension = conf.OutputExtension
+	}
+
+	outputFilePath := filepath.Join(buildDir, data.slug + outputExtension)
 	outputFile, err := os.OpenFile(outputFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 
 	defer outputFile.Close()
@@ -231,7 +237,7 @@ func generateArticleHtml(theme string, templateFile string, data sourceFile,
 	checkError(err)
 
 	if len(data.redirects) != 0 {
-		generateRedirectHtml(params, data)
+		generateRedirectHtml(params, data, conf)
 	}
 
 	// Syntax highlighting
@@ -301,7 +307,7 @@ func generateArticleHtml(theme string, templateFile string, data sourceFile,
 	}
 
 	for _, article := range articles {
-		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article), -1)
+		output = strings.Replace(output, "{{@"+article.slug+"}}", createLink(article, conf), -1)
 	}
 
 	// TODO: template file names shouldn't be hardcoded
@@ -343,9 +349,10 @@ func generateRss(articles []sourceFile, conf *config, params *Parameters) {
 	checkError(err)
 
 	var items []*feeds.Item
+	outputExtension := conf.OutputExtension
 
 	for _, article := range articles {
-		link := &feeds.Link{Href: fmt.Sprintf("%s/%s.html", conf.Url, article.slug)}
+		link := &feeds.Link{Href: fmt.Sprintf("%s/%s%s", conf.Url, article.slug, outputExtension)}
 		items = append(items, &feeds.Item{Title: article.title, Link: link, Description: article.description, Created: article.created})
 	}
 
@@ -381,7 +388,7 @@ func addPostsLinksHtml(output string, project string, theme string, templateFile
 		postsContent := ""
 
 		for _, post := range sortedPosts {
-			singlePostContent := strings.Replace(posts[1], "{{post_link}}", createLink(post), -1)
+			singlePostContent := strings.Replace(posts[1], "{{post_link}}", createLink(post, conf), -1)
 			singlePostContent = strings.Replace(singlePostContent, "{{post_date}}", post.created.Format("2006-01-02"), -1)
 			singlePostContent = strings.Replace(singlePostContent, "{{post_description}}", post.description, -1)
 			postsContent += singlePostContent
@@ -399,9 +406,11 @@ func addPostsLinksHtml(output string, project string, theme string, templateFile
 	return output
 }
 
-func generateRedirectHtml(params *Parameters, data sourceFile) {
+func generateRedirectHtml(params *Parameters, data sourceFile, conf *config) {
+	outputExtension := conf.OutputExtension
+
 	for _, redirect := range data.redirects {
-		outputFilePath := filepath.Join(getBuildDir(params), redirect+".html")
+		outputFilePath := filepath.Join(getBuildDir(params), redirect + outputExtension)
 		outputFile, err := os.OpenFile(outputFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 
 		defer outputFile.Close()
@@ -410,7 +419,7 @@ func generateRedirectHtml(params *Parameters, data sourceFile) {
 
 		os.Truncate(outputFilePath, 0)
 
-		newUrl := data.slug + ".html"
+		newUrl := data.slug + outputExtension
 
 		redirectHtml := fmt.Sprintf(`<html>
 <head>
@@ -424,8 +433,18 @@ func generateRedirectHtml(params *Parameters, data sourceFile) {
 	}
 }
 
-func createLink(data sourceFile) string {
-	return fmt.Sprintf("<a href=\"%s\" title=\"%s\">%s</a>", data.slug+".html", data.description, data.title)
+func createLink(data sourceFile, conf *config) string {
+	outputExtension := conf.OutputExtension
+	linksBeginWithSlash := conf.LinksBeginWithSlash
+
+	var linkStart string
+	if linksBeginWithSlash {
+		linkStart = "/"
+	} else {
+		linkStart = ""
+	}
+
+	return fmt.Sprintf("<a href=\"%s%s\" title=\"%s\">%s</a>", linkStart, data.slug + outputExtension, data.description, data.title)
 }
 
 func buildProject(conf *config, params *Parameters) {
