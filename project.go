@@ -75,7 +75,7 @@ func createProject(params *Parameters) {
 	writeToNewFile(filepath.Join(project, "themes", "default", "app.scss"), themeStyleApp)
 	writeToNewFile(filepath.Join(project, "themes", "default", "bootstrap.scss"), themeStyleBootstrap)
 	writeToNewFile(filepath.Join(project, "themes", "default", "bundle.scss"), themeStyleBundle)
-	
+
 	// Scipio.toml config
 	writeToNewFile(filepath.Join(project, "scipio.toml"), configValue)
 

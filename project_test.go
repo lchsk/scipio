@@ -306,6 +306,9 @@ func TestBuildProject(t *testing.T) {
         <p><p>Home Page</p>
 </p>
 
+        <li><a href="welcome-to-your-new-website.html" title="Description of the first post">Welcome to your new website</a></li>
+        <span class="date">2021-01-27</span>
+
         <li><a href="article-1.html" title="Description of Article 1">Article 1</a></li>
         <span class="date">1950-05-15</span>
 
