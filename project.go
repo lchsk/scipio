@@ -25,6 +25,14 @@ func checkError(e error) {
 	}
 }
 
+func writeToNewFile(path string, contents string) {
+	outputFile, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+	checkError(err)
+	defer outputFile.Close()
+
+	outputFile.WriteString(contents)
+}
+
 func createProject(params *Parameters) {
 	project := params.ProjectName
 	var err error
@@ -36,7 +44,17 @@ func createProject(params *Parameters) {
 	checkError(err)
 	err = createDir(filepath.Join(project, "source", "posts"))
 	checkError(err)
+
+	firstPost := fmt.Sprintf("%s\n\n%s\n", firstPostPattern, "```python\nprint('hello')\n```")
+
+	writeToNewFile(filepath.Join(project, "source", "posts", "welcome.md"), firstPost)
+	checkError(err)
 	err = createDir(filepath.Join(project, "source", "pages"))
+	checkError(err)
+
+	writeToNewFile(filepath.Join(project, "source", "pages", "privacy-policy.md"), privacyPolicy)
+	writeToNewFile(filepath.Join(project, "source", "index.md"), indexPage)
+
 	checkError(err)
 	err = createDir(filepath.Join(project, "source", "data"))
 	checkError(err)
@@ -46,13 +64,23 @@ func createProject(params *Parameters) {
 	checkError(err)
 	err = createDir(filepath.Join(project, "themes", "default", "static"))
 	checkError(err)
-	err = createFile(filepath.Join(project, "themes", "default", "index.html"))
-	checkError(err)
-	err = createFile(filepath.Join(project, "source", "index.md"))
-	checkError(err)
 
-	err = createFile(filepath.Join(project, "scipio.toml"))
-	checkError(err)
+	writeToNewFile(filepath.Join(project, "themes", "default", "index.html"), indexTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "post.html"), postTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "page.html"), pageTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "top.html"), topTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "footer.html"), footerTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "header.html"), headerTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "posts.html"), postsTheme)
+	writeToNewFile(filepath.Join(project, "themes", "default", "app.scss"), themeStyleApp)
+	writeToNewFile(filepath.Join(project, "themes", "default", "bootstrap.scss"), themeStyleBootstrap)
+	writeToNewFile(filepath.Join(project, "themes", "default", "bundle.scss"), themeStyleBundle)
+	
+	// Scipio.toml config
+	writeToNewFile(filepath.Join(project, "scipio.toml"), configValue)
+
+	// package.json
+	writeToNewFile(filepath.Join(project, "package.json"), packageJsonValue)
 }
 
 func getBuildDir(params *Parameters) string {
